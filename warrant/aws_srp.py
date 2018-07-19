@@ -94,8 +94,9 @@ class AWSSRP(object):
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
+    SOFTWARE_TOKEN_MFA_CHALLENGE = 'SOFTWARE_TOKEN_MFA'
 
-    def __init__(self, username, password, pool_id, client_id, pool_region=None,
+    def __init__(self, username, password, mfa_code, pool_id, client_id, pool_region=None,
                  client=None, client_secret=None):
         if pool_region is not None and client is not None:
             raise ValueError("pool_region and client should not both be specified "
@@ -103,6 +104,7 @@ class AWSSRP(object):
 
         self.username = username
         self.password = password
+        self.mfa_code = mfa_code
         self.pool_id = pool_id
         self.client_id = client_id
         self.client_secret = client_secret
@@ -207,15 +209,26 @@ class AWSSRP(object):
         )
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response['ChallengeParameters'])
-            tokens = boto_client.respond_to_auth_challenge(
+            auth_challenge_response = boto_client.respond_to_auth_challenge(
                 ClientId=self.client_id,
                 ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                 ChallengeResponses=challenge_response)
-
-            if tokens.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
+            
+            if auth_challenge_response.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
                 raise ForceChangePasswordException('Change password before authenticating')
 
-            return tokens
+            if auth_challenge_response.get('ChallengeName') == self.SOFTWARE_TOKEN_MFA_CHALLENGE:
+                session = auth_challenge_response['Session']
+                user_id_for_srp = response['ChallengeParameters']['USER_ID_FOR_SRP']
+                auth_challenge_response = {
+                    'SOFTWARE_TOKEN_MFA_CODE' : self.mfa_code,
+                    'USERNAME': user_id_for_srp}
+                auth_challenge_response = boto_client.respond_to_auth_challenge(
+                    ClientId=self.client_id,
+                    Session=session,
+                    ChallengeName=self.SOFTWARE_TOKEN_MFA_CHALLENGE,
+                    ChallengeResponses=auth_challenge_response)
+            return auth_challenge_response
         else:
             raise NotImplementedError('The %s challenge is not supported' % response['ChallengeName'])
 

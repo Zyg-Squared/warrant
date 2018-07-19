@@ -370,20 +370,22 @@ class Cognito(object):
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
 
-    def authenticate(self, password):
+    def authenticate(self, password, mfa_code=''):
         """
         Authenticate the user using the SRP protocol
         :param password: The user's passsword
+        :param mfa_code: The user's software token mfa code -if required-
         :return:
         """
-        aws = AWSSRP(username=self.username, password=password, pool_id=self.user_pool_id,
+        aws = AWSSRP(username=self.username, password=password, mfa_code=mfa_code, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
         tokens = aws.authenticate_user()
-        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
+	    self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
+	
 
     def new_password_challenge(self, password, new_password):
         """
