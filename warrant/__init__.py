@@ -268,11 +268,11 @@ class Cognito(object):
     def add_custom_attributes(self, **kwargs):
         custom_key = 'custom'
         custom_attributes = {}
-        
+
         for old_key, value in kwargs.items():
             new_key = custom_key + ':' + old_key
             custom_attributes[new_key] = value
-        
+
         self.custom_attributes = custom_attributes
 
     def register(self, username, password, attr_map=None):
@@ -380,12 +380,12 @@ class Cognito(object):
         aws = AWSSRP(username=self.username, password=password, mfa_code=mfa_code, pool_id=self.user_pool_id,
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
+
         tokens = aws.authenticate_user()
         self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
-	
 
     def new_password_challenge(self, password, new_password):
         """
@@ -663,4 +663,3 @@ class Cognito(object):
         response = self.client.list_groups(UserPoolId=self.user_pool_id)
         return [self.get_group_obj(group_data)
                 for group_data in response.get('Groups')]
-
