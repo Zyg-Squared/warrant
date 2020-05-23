@@ -385,7 +385,6 @@ class Cognito(object):
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
-	
 
     def new_password_challenge(self, password, new_password):
         """
