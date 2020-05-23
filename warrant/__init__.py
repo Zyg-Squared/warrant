@@ -381,7 +381,7 @@ class Cognito(object):
                      client_id=self.client_id, client=self.client,
                      client_secret=self.client_secret)
         tokens = aws.authenticate_user()
-	self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
+        self.verify_token(tokens['AuthenticationResult']['IdToken'],'id_token','id')
         self.refresh_token = tokens['AuthenticationResult']['RefreshToken']
         self.verify_token(tokens['AuthenticationResult']['AccessToken'], 'access_token','access')
         self.token_type = tokens['AuthenticationResult']['TokenType']
